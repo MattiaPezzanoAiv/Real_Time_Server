@@ -1,0 +1,8 @@
+bindPort:2500
+bindIpAddress:127.0.0.1
+blocking:false
+sendRate:0,1
+receiveMaxBufferSize:128
+nOfRefusePerClient:5
+logOn:True
+logPath:\Users\Matia\Desktop\RealTimeServer\RealTimeServer.Test\Log
