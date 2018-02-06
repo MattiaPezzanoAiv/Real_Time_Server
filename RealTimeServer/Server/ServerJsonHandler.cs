@@ -4,14 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RealTimeServer
+namespace RealTimeServer.AutorityServer
 {
-    public class JsonHandler
+    public class ServerJsonHandler
     {
-        public class ErrorMessage
-        {
-            public string message;
-        }
+       
         
 
         public class Join

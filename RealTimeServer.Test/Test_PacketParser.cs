@@ -7,6 +7,8 @@ using NUnit.Framework;
 using Newtonsoft.Json;
 using System.Net;
 using System.Reflection;
+using RealTimeServer;
+using RealTimeServer.AutorityServer;
 
 namespace RealTimeServer.Test
 {
@@ -19,10 +21,10 @@ namespace RealTimeServer.Test
         {
             Server.Init();
 
-            JsonHandler.Join join = new JsonHandler.Join();
+            ServerJsonHandler.Join join = new ServerJsonHandler.Join();
             join.name = "foobar";
             string json = JsonConvert.SerializeObject(join);
-            packet = new Packet(1, true); //this is a join packet
+            packet = new Packet(1, true,Server.TimeStamp); //this is a join packet
             packet.Writer.Write(json);
             Type packetType = typeof(Packet);
             PropertyInfo prop = packetType.GetProperty("SourceEp");

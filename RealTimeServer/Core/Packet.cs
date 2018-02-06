@@ -29,15 +29,16 @@ namespace RealTimeServer
         /// </summary>
         /// <param name="command" type="byte"></param>
         /// <param name="reliable" type="bool"></param>
-        public Packet(byte command, bool reliable)
+        /// <param name="timeStamp" type="int">Pass current time stamp of server or client</param>
+        public Packet(byte command, bool reliable, int localTimeStamp)
         {
             stream = new MemoryStream();
             reader = new BinaryReader(stream);
             writer = new BinaryWriter(stream);
-
+            
             //set up shortcuts
             PacketId = packetId;
-            TimeStamp = Server.TimeStamp;
+            TimeStamp = localTimeStamp;
             Command = command;
             Reliable = reliable;
             Buffer = stream.ToArray();
@@ -51,7 +52,7 @@ namespace RealTimeServer
         /// </summary>
         /// <param name="buffer" type="byte[]"></param>
         /// <param name="dataReceived" type="int">the amount of data effectively received</param>
-        public Packet(byte[] buffer, int dataReceived, EndPoint source)
+        public Packet(byte[] buffer, int dataReceived, EndPoint source, int localTimeStamp)
         {
             this.Buffer = new byte[dataReceived];
             System.Buffer.BlockCopy(buffer, 0, this.Buffer, 0, dataReceived); //fully payload
@@ -59,7 +60,7 @@ namespace RealTimeServer
             this.TimeStamp = BitConverter.ToInt32(buffer, 4);
             this.Reliable = Utility.IsBitSet(buffer[8], 7);
             this.Command = Utility.SetBitOnByte(buffer[8], 7, false);
-            this.LocalTimeStamp = (int)(Server.TimeStamp * 1000);
+            this.LocalTimeStamp = localTimeStamp;
             this.SourceEp = source;
         }
 
@@ -101,9 +102,9 @@ namespace RealTimeServer
         /// </summary>
         /// <param name="packetId">packet id to acknowledge</param>
         /// <returns></returns>
-        public static Packet CreateAck(uint packetId)
+        public static Packet CreateAck(uint packetId, int localTimeStamp)
         {
-            Packet packet = new Packet(0, false);
+            Packet packet = new Packet(0, false, localTimeStamp);
             packet.writer.Write(packetId);
             return packet;
         }
@@ -121,12 +122,12 @@ namespace RealTimeServer
         /// <param name="clientId" type="uint">the id assigned to this client, if is uint.maxvalue the client request will be rejected</param>
         /// <param name="jsonReason" type="string">The reason of join or reject</param>
         /// <returns></returns>
-        public static Packet GetJoined(uint clientId, string jsonReason)
+        public static Packet GetJoined(uint clientId, string jsonReason,int localTimeStamp)
         {
-            Packet packet = new Packet(2, true);
+            Packet packet = new Packet(2, true, localTimeStamp);
             packet.Writer.Write(clientId);
 
-            JsonHandler.ErrorMessage message = new JsonHandler.ErrorMessage();
+            CoreJsonHandler.ErrorMessage message = new CoreJsonHandler.ErrorMessage();
             message.message = jsonReason;
             string reason = JsonConvert.SerializeObject(message);
 
@@ -139,23 +140,23 @@ namespace RealTimeServer
         /// <param name="clientId" type="uint"></param>
         /// <param name="jsonReason" type="string"></param>
         /// <returns></returns>
-        public static Packet GetClientJoined(uint clientId, string jsonReason)
+        public static Packet GetClientJoined(uint clientId, string jsonReason,int localTimeStamp)
         {
-            Packet packet = new Packet(3, true);
+            Packet packet = new Packet(3, true, localTimeStamp);
             packet.Writer.Write(clientId);
             //to add other stuffs
-            JsonHandler.ErrorMessage message = new JsonHandler.ErrorMessage();
+            CoreJsonHandler.ErrorMessage message = new CoreJsonHandler.ErrorMessage();
             message.message = jsonReason;
             string reason = JsonConvert.SerializeObject(message);
 
             packet.Writer.Write(reason);
             return packet;
         }
-        public static Packet GetClientKicked(uint clientId, string jsonReason)
+        public static Packet GetClientKicked(uint clientId, string jsonReason,int localTimeStamp)
         {
-            Packet packet = new Packet(4, true);
+            Packet packet = new Packet(4, true, localTimeStamp);
             packet.Writer.Write(clientId);
-            JsonHandler.ErrorMessage message = new JsonHandler.ErrorMessage();
+            CoreJsonHandler.ErrorMessage message = new CoreJsonHandler.ErrorMessage();
             message.message = jsonReason;
             string reason = JsonConvert.SerializeObject(message);
 

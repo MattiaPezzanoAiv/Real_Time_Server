@@ -26,7 +26,7 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_WriteheaderPacketId()
         {
-            packet = new Packet(10, false);
+            packet = new Packet(10, false, 0);
             buffer = packet.Stream.ToArray();
             uint packetid = BitConverter.ToUInt32(buffer, 0); //start from first byte
             Assert.That(packetid, Is.EqualTo(0));
@@ -34,12 +34,12 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_WriteheaderPacketIdMultiple()
         {
-            packet = new Packet(10, false);
+            packet = new Packet(10, false,0);
             buffer = packet.Stream.ToArray();
             uint packetid = BitConverter.ToUInt32(buffer, 0); //start from first byte
             Assert.That(packetid, Is.EqualTo(0));
 
-            Packet packet2 = new Packet(10,false);
+            Packet packet2 = new Packet(10,false,0);
             byte[] buffer2 = packet2.Stream.ToArray();
             uint packetid2 = BitConverter.ToUInt32(buffer2, 0); //start from first byte
             Assert.That(packetid2, Is.EqualTo(1));
@@ -47,12 +47,12 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_WriteheaderPacketIdNotEqualToPrev()
         {
-            packet = new Packet(10, false);
+            packet = new Packet(10, false,0);
             buffer = packet.Stream.ToArray();
             uint packetid = BitConverter.ToUInt32(buffer, 0); //start from first byte
             Assert.That(packetid, Is.EqualTo(0));
 
-            Packet packet2 = new Packet(10,false);
+            Packet packet2 = new Packet(10,false,0);
             byte[] buffer2 = packet2.Stream.ToArray();
             uint packetid2 = BitConverter.ToUInt32(buffer2, 0); //start from first byte
             Assert.That(packetid2, Is.Not.EqualTo(packetid));
@@ -60,7 +60,7 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_WriteHeaderCommand()
         {
-            packet = new Packet(10, false);
+            packet = new Packet(10, false,0);
             buffer = packet.Stream.ToArray();
             byte command = buffer[8];
             Assert.That(command, Is.EqualTo(10));
@@ -68,7 +68,7 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_WriteHeaderCommandReliable()
         {
-            packet = new Packet(10, true);
+            packet = new Packet(10, true, 0);
             buffer = packet.Stream.ToArray();
             byte command = buffer[8];
             Assert.That(command, Is.EqualTo(138));
@@ -76,7 +76,7 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_Shortcuts()
         {
-            packet = new Packet(125, false);
+            packet = new Packet(125, false, 0);
             Assert.That(packet.Command, Is.EqualTo(125));
             Assert.That(packet.Reliable, Is.EqualTo(false));
             Assert.That(packet.PacketId, Is.EqualTo(0));  //first
@@ -90,7 +90,7 @@ namespace RealTimeServer.Test
             Buffer.BlockCopy(BitConverter.GetBytes(100), 0, buffer, 4, sizeof(int));
             buffer[8] = 255; //reliable with command 127
 
-            Packet p = new Packet(buffer,15, new IPEndPoint(IPAddress.Parse("127.0.0.1"),2000));  //simulating a socket.receive()
+            Packet p = new Packet(buffer,15, new IPEndPoint(IPAddress.Parse("127.0.0.1"),2000), 0);  //simulating a socket.receive()
             Assert.That(p.Buffer.Length, Is.EqualTo(15));
             Assert.That(p.PacketId, Is.EqualTo(10));
             Assert.That(p.TimeStamp, Is.EqualTo(100));
@@ -100,48 +100,48 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_IsAck()
         {
-            Packet p = Packet.CreateAck(10);
+            Packet p = Packet.CreateAck(10, 0);
             Assert.That(Packet.IsAck(p), Is.EqualTo(true));
         }
         [Test]
         public void Test_IsAckRedLight()
         {
-            Packet p = new Packet(15, true);
+            Packet p = new Packet(15, true, 0);
             Assert.That(Packet.IsAck(p), Is.EqualTo(false));
         }
         [Test]
         public void Test_PacketGetJoinedNegative()
         {
-            Packet p = Packet.GetJoined(uint.MaxValue, "client rejected");
+            Packet p = Packet.GetJoined(uint.MaxValue, "client rejected", 0);
             byte[] data = p.Buffer;
             p.Stream.Seek(packetHeaderSize, System.IO.SeekOrigin.Begin);
             uint id = p.Reader.ReadUInt32();
             string json = p.Reader.ReadString();
-            JsonHandler.ErrorMessage message = JsonConvert.DeserializeObject< JsonHandler.ErrorMessage>(json);
+            CoreJsonHandler.ErrorMessage message = JsonConvert.DeserializeObject< CoreJsonHandler.ErrorMessage>(json);
             Assert.That(message.message, Is.EqualTo("client rejected"));
             Assert.That(id, Is.EqualTo(uint.MaxValue));
         }
         [Test]
         public void Test_PacketGetJoinedPositive()
         {
-            Packet p = Packet.GetJoined(10, "client joined");
+            Packet p = Packet.GetJoined(10, "client joined", 0);
             byte[] data = p.Buffer;
             p.Stream.Seek(packetHeaderSize, System.IO.SeekOrigin.Begin);
             uint id = p.Reader.ReadUInt32();
             string json = p.Reader.ReadString();
-            JsonHandler.ErrorMessage message = JsonConvert.DeserializeObject<JsonHandler.ErrorMessage>(json);
+            CoreJsonHandler.ErrorMessage message = JsonConvert.DeserializeObject<CoreJsonHandler.ErrorMessage>(json);
             Assert.That(message.message, Is.EqualTo("client joined"));
             Assert.That(id, Is.EqualTo(10));
         }
         [Test]
         public void Test_PacketGetKick()
         {
-            Packet p = Packet.GetClientKicked(5, "client kicked");
+            Packet p = Packet.GetClientKicked(5, "client kicked", 0);
             byte[] data = p.Buffer;
             p.Stream.Seek(packetHeaderSize, System.IO.SeekOrigin.Begin);
             uint id = p.Reader.ReadUInt32();
             string json = p.Reader.ReadString();
-            JsonHandler.ErrorMessage message = JsonConvert.DeserializeObject<JsonHandler.ErrorMessage>(json);
+            CoreJsonHandler.ErrorMessage message = JsonConvert.DeserializeObject<CoreJsonHandler.ErrorMessage>(json);
             Assert.That(message.message, Is.EqualTo("client kicked"));
             Assert.That(id, Is.EqualTo(5));
         }

@@ -9,7 +9,7 @@ using RealTimeServer.Config;
 using System.Diagnostics;
 using RealTimeServer.Log;
 
-namespace RealTimeServer
+namespace RealTimeServer.AutorityServer
 {
     public static partial class Server
     {
@@ -132,7 +132,7 @@ namespace RealTimeServer
             IClient client = GetClient(sourceEp);
             if (client == null)
             {
-                SLog.Write(string.Format("Packet Enqueue requested for {0}:{1}. There's no player with this EndPoint", (sourceEp as IPEndPoint).Address, (sourceEp as IPEndPoint).Port));
+                SLog.Write(string.Format("Packet Enqueue requested for {0}:{1}. There's no player with this EndPoint", (sourceEp as IPEndPoint).Address, (sourceEp as IPEndPoint).Port),TimeStamp);
                 return;     //cant enqueue this packet
             }
             uint playerId = client.ClientId;
@@ -202,7 +202,7 @@ namespace RealTimeServer
             if (!IsClientJoined(ep))
                 return;
 
-            Packet receivedPacket = new Packet(receiveBuffer, amount, ep);
+            Packet receivedPacket = new Packet(receiveBuffer, amount, ep,TimeStamp);
             #region ACK_MANAGEMENT
             if (Packet.IsAck(receivedPacket))
             {
@@ -214,7 +214,7 @@ namespace RealTimeServer
             #region RELIABLE_MANAGEMENT
             if (receivedPacket.Reliable)            //send ack
             {
-                Packet packet = Packet.CreateAck(receivedPacket.PacketId);
+                Packet packet = Packet.CreateAck(receivedPacket.PacketId,TimeStamp);
                 //EnquePacket(packet.);
             }
             #endregion RELIABLE_MANAGEMENT
@@ -258,7 +258,7 @@ namespace RealTimeServer
                 if (client.Value.RefuseTimes > Configuration.NOfRefusePerClient)
                 {
                     //kick client
-                    Packet packet = Packet.GetClientKicked(client.Key, string.Format("Client {0} kicked for eccessive latency", client.Value.Name));
+                    Packet packet = Packet.GetClientKicked(client.Key, string.Format("Client {0} kicked for eccessive latency", client.Value.Name),TimeStamp);
                     SendBroadcast(packet); //all clients needs to know about kick
                     RemoveClient(client.Key);
                 }

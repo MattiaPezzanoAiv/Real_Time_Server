@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using System.Net;
+using RealTimeServer.AutorityServer;
+using RealTimeServer;
 
 namespace RealTimeServer.Test
 {
@@ -21,9 +23,9 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_PacketDequeue()
         {
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(9, new Packet(10, false));
-            Server.EnquePacket(8, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false,Server.TimeStamp));
+            Server.EnquePacket(9, new Packet(10, false, Server.TimeStamp));
+            Server.EnquePacket(8, new Packet(10, false, Server.TimeStamp));
             Server.DequeuePackets();
             Assert.That(Server.PacketsCount, Is.EqualTo(0));
         }
@@ -72,7 +74,7 @@ namespace RealTimeServer.Test
             Server.AddClient(new Client("foo", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
             Server.AddClient(new Client("bar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
 
-            Server.SendBroadcast(Packet.GetClientKicked(0, "fake reason"));
+            Server.SendBroadcast(Packet.GetClientKicked(0, "fake reason", Server.TimeStamp));
             Assert.That(Server.PacketsCount, Is.EqualTo(3));
         }
         [Test]
@@ -82,7 +84,7 @@ namespace RealTimeServer.Test
             Server.AddClient(new Client("foo", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
             Server.AddClient(new Client("bar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
 
-            Server.SendBroadcast(Packet.GetClientKicked(0, "fake reason"), 0); //first client ignored
+            Server.SendBroadcast(Packet.GetClientKicked(0, "fake reason", Server.TimeStamp), 0); //first client ignored
             Assert.That(Server.PacketsCount, Is.EqualTo(2));
         }
         [Test]
@@ -111,38 +113,38 @@ namespace RealTimeServer.Test
         [Test]
         public void Test_PacketEnqueue()
         {
-            Server.EnquePacket(10, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false, Server.TimeStamp));
             Assert.That(Server.PacketsCount, Is.EqualTo(1));
         }
         [Test]
         public void Test_PacketEnqueueMultiple()
         {
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(9, new Packet(10, false));
-            Server.EnquePacket(8, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false, Server.TimeStamp));
+            Server.EnquePacket(9, new Packet(10, false, Server.TimeStamp));
+            Server.EnquePacket(8, new Packet(10, false, Server.TimeStamp));
             Assert.That(Server.PacketsCount, Is.EqualTo(3));
         }
         [Test]
         public void Test_PacketEnqueueSameId()
         {
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(1, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false,Server.TimeStamp));
+            Server.EnquePacket(10, new Packet(10, false,Server.TimeStamp));
+            Server.EnquePacket(10, new Packet(10, false, Server.TimeStamp));
+            Server.EnquePacket(1, new Packet(10, false, Server.TimeStamp));
             Assert.That(Server.PacketsCount, Is.EqualTo(4));
         }
         [Test]
         public void Test_PacketEnqueueEpGreenLight()
         {
             Server.AddClient(new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
-            Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000),new Packet(0,true));
+            Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000),new Packet(0,true, Server.TimeStamp));
             Assert.That(Server.PacketsCount, Is.EqualTo(1));
         }
         [Test]
         public void Test_PacketEnqueueEpNotExist()
         {
             Server.AddClient(new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
-            Assert.That(()=> Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.5"), 2000), new Packet(0, true)),Throws.Nothing);
+            Assert.That(()=> Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.5"), 2000), new Packet(0, true, Server.TimeStamp)),Throws.Nothing);
             Assert.That(Server.PacketsCount, Is.EqualTo(0));    //cant queue this packet cuz endpoint is not joined
         }
         #endregion ENQUEUE_PACKET
