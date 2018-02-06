@@ -54,11 +54,11 @@ namespace RealTimeServer.Test
             Assert.That(Server.PlayersConnected, Is.EqualTo(1));
         }
         [Test]
-        public void Test_ParseJoinOtherClientsAllerted()
+        public void Test_ParseJoinOtherClientsAllerted()        //this check alredy if the client with same ip join the game
         {
-            Server.AddClient(new Client("fake", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
-            Server.AddClient(new Client("foo", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
-            Server.AddClient(new Client("bar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
+            Server.AddClient(new Client("fake", new IPEndPoint(IPAddress.Parse("127.0.0.2"), 2000)));
+            Server.AddClient(new Client("foo", new IPEndPoint(IPAddress.Parse("127.0.0.3"), 2000)));
+            Server.AddClient(new Client("bar", new IPEndPoint(IPAddress.Parse("127.0.0.4"), 2000)));
 
             Server.ParseJoin(packet);
             Assert.That(Server.PacketsCount, Is.EqualTo(Server.PlayersConnected));

@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using RealTimeServer.Config;
 using System.Diagnostics;
+using RealTimeServer.Log;
 
 namespace RealTimeServer
 {
@@ -37,6 +38,9 @@ namespace RealTimeServer
         private static EndPoint myEndpoint;
 
         private static Dictionary<uint, Queue<Packet>> toSend;  //uint = player id
+
+        private static List<Packet> reliablePackets;        //contain all reliable packets sended, waiting for ack
+
         /// <summary>
         /// Return the numbers of packet in queue 
         /// </summary>
@@ -64,6 +68,7 @@ namespace RealTimeServer
             //internal
             toSend = new Dictionary<uint, Queue<Packet>>();
             connectedClients = new Dictionary<uint, IClient>();
+            reliablePackets = new List<Packet>();
 
 
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -117,6 +122,27 @@ namespace RealTimeServer
                 toSend.Add(playerId, new Queue<Packet>());
             toSend[playerId].Enqueue(packet);
         }
+        /// <summary>
+        /// Put the packet in a queue automatically managed from server
+        /// </summary>
+        /// <param name="playerId" type="uint"></param>
+        /// <param name="packet" type="Packet"></param>
+        public static void EnquePacket(EndPoint sourceEp, Packet packet)
+        {
+            IClient client = GetClient(sourceEp);
+            if (client == null)
+            {
+                SLog.Write(string.Format("Packet Enqueue requested for {0}:{1}. There's no player with this EndPoint", (sourceEp as IPEndPoint).Address, (sourceEp as IPEndPoint).Port));
+                return;     //cant enqueue this packet
+            }
+            uint playerId = client.ClientId;
+
+            if (!toSend.ContainsKey(playerId))
+                toSend.Add(playerId, new Queue<Packet>());
+            toSend[playerId].Enqueue(packet);
+        }
+
+
         /// <summary>
         /// Send a packet instantly to specific client, this call bypass the queue system
         /// </summary>
@@ -177,12 +203,23 @@ namespace RealTimeServer
                 return;
 
             Packet receivedPacket = new Packet(receiveBuffer, amount, ep);
+            #region ACK_MANAGEMENT
             if (Packet.IsAck(receivedPacket))
             {
-                //EnquePacket(, Packet.CreateAck(receivedPacket.PacketId));// get id from joined players list
+                //remove to reliable list
                 return;
             }
-            //read command and parse
+            #endregion ACK_MANAGEMENT
+
+            #region RELIABLE_MANAGEMENT
+            if (receivedPacket.Reliable)            //send ack
+            {
+                Packet packet = Packet.CreateAck(receivedPacket.PacketId);
+                //EnquePacket(packet.);
+            }
+            #endregion RELIABLE_MANAGEMENT
+
+            //EnquePacket(, Packet.CreateAck(receivedPacket.PacketId));// get id from joined players list
 
             byte command = receivedPacket.Command;
             //MUST BE REFACTORED
@@ -229,11 +266,7 @@ namespace RealTimeServer
         }
         public static void AddClient(IClient client)
         {
-            //same id is impossible to happen
-            //same end point is accepted
-
             if (client == null) return;
-            if (IsClientJoined(client.Name)) return;    //client with same name is not accepted
             connectedClients.Add(client.ClientId, client);
         }
         public static void RemoveClient(uint clientId)
@@ -330,7 +363,7 @@ namespace RealTimeServer
         }
         #endregion CONNECTED_CLIENTS_MANAGEMENT
 
-        
+
 
     }
 }

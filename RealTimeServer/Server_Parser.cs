@@ -16,15 +16,20 @@ namespace RealTimeServer
             packet.Stream.Seek(9, SeekOrigin.Begin);
             string json = packet.Reader.ReadString();
             JsonHandler.Join join = JsonConvert.DeserializeObject<JsonHandler.Join>(json);
-            //check if alredy joined
             Packet p;
-            if (IsClientJoined(join.name))
+            if (IsClientJoined(join.name))              //is client alredy joined
             {
-                p = Packet.GetJoined(uint.MaxValue, "A client with same name alredy joined");   //cant join
+                p = Packet.GetJoined(uint.MaxValue, "A client with same name alredy joined");   
                 SendPacketInstantly(packet.SourceEp, p);                    //cant enqueue this packet cuz not joined
                 return;
             }
-            //TO DO: CHECK IF A CLIENT WITH SAME ENDPOINT IS JOINED
+           
+            if(IsClientJoined(packet.SourceEp))
+            {
+                p = Packet.GetJoined(uint.MaxValue, "A client with same IP alredy joined");
+                SendPacketInstantly(packet.SourceEp, p);                    //cant enqueue this packet cuz not joined
+                return;
+            }
 
 
             //add to players list

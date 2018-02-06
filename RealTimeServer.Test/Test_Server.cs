@@ -17,29 +17,7 @@ namespace RealTimeServer.Test
             Server.Init();
         }
 
-        [Test]
-        public void Test_PacketEnqueue()
-        {
-            Server.EnquePacket(10, new Packet(10, false));
-            Assert.That(Server.PacketsCount, Is.EqualTo(1));
-        }
-        [Test]
-        public void Test_PacketEnqueueMultiple()
-        {
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(9, new Packet(10, false));
-            Server.EnquePacket(8, new Packet(10, false));
-            Assert.That(Server.PacketsCount, Is.EqualTo(3));
-        }
-        [Test]
-        public void Test_PacketEnqueueSameId()
-        {
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(10, new Packet(10, false));
-            Server.EnquePacket(1, new Packet(10, false));
-            Assert.That(Server.PacketsCount, Is.EqualTo(4));
-        }
+        
         [Test]
         public void Test_PacketDequeue()
         {
@@ -128,7 +106,47 @@ namespace RealTimeServer.Test
             Assert.That(Server.PlayersConnected, Is.EqualTo(3));
         }
 
-        //TO DO: ADD TEST ON ADD CLIENT
+
+        #region ENQUEUE_PACKET
+        [Test]
+        public void Test_PacketEnqueue()
+        {
+            Server.EnquePacket(10, new Packet(10, false));
+            Assert.That(Server.PacketsCount, Is.EqualTo(1));
+        }
+        [Test]
+        public void Test_PacketEnqueueMultiple()
+        {
+            Server.EnquePacket(10, new Packet(10, false));
+            Server.EnquePacket(9, new Packet(10, false));
+            Server.EnquePacket(8, new Packet(10, false));
+            Assert.That(Server.PacketsCount, Is.EqualTo(3));
+        }
+        [Test]
+        public void Test_PacketEnqueueSameId()
+        {
+            Server.EnquePacket(10, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false));
+            Server.EnquePacket(10, new Packet(10, false));
+            Server.EnquePacket(1, new Packet(10, false));
+            Assert.That(Server.PacketsCount, Is.EqualTo(4));
+        }
+        [Test]
+        public void Test_PacketEnqueueEpGreenLight()
+        {
+            Server.AddClient(new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
+            Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000),new Packet(0,true));
+            Assert.That(Server.PacketsCount, Is.EqualTo(1));
+        }
+        [Test]
+        public void Test_PacketEnqueueEpNotExist()
+        {
+            Server.AddClient(new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000)));
+            Assert.That(()=> Server.EnquePacket(new IPEndPoint(IPAddress.Parse("127.0.0.5"), 2000), new Packet(0, true)),Throws.Nothing);
+            Assert.That(Server.PacketsCount, Is.EqualTo(0));    //cant queue this packet cuz endpoint is not joined
+        }
+        #endregion ENQUEUE_PACKET
+
         #region ADD_CLIENT
         [Test]
         public void Test_AddClientGreenLight()
@@ -137,17 +155,6 @@ namespace RealTimeServer.Test
             Client client = new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000));
             Server.AddClient(client);
             Assert.That(Server.PlayersConnected, Is.EqualTo(1));    //regular filled server
-        }
-        [Test]
-        public void Test_AddClientSameName()
-        {
-            Assert.That(Server.PlayersConnected, Is.EqualTo(0));    //empty server
-            Client client1 = new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000));
-            Client client2 = new Client("foobar", new IPEndPoint(IPAddress.Parse("127.0.0.2"), 2000));
-
-            Server.AddClient(client1);
-            Assert.That(() =>Server.AddClient(client2),Throws.Nothing);
-            Assert.That(Server.PlayersConnected, Is.EqualTo(1));    
         }
         [Test]
         public void Test_AddClientNull()
