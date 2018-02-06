@@ -20,21 +20,20 @@ namespace RealTimeServer
             Packet p;
             if (IsClientJoined(join.name))
             {
-                //send negatibve joined
-                p = Packet.GetJoined(uint.MaxValue, "A client with same name alredy joined");
-                SendPacketInstantly(packet.SourceEp, p);
+                p = Packet.GetJoined(uint.MaxValue, "A client with same name alredy joined");   //cant join
+                SendPacketInstantly(packet.SourceEp, p);                    //cant enqueue this packet cuz not joined
                 return;
             }
+            //TO DO: CHECK IF A CLIENT WITH SAME ENDPOINT IS JOINED
+
 
             //add to players list
             IClient client = new Client(join.name, packet.SourceEp);
             AddClient(client);
-            //SEND POSITIVE JOINED
-            p = Packet.GetJoined(client.ClientId, "Welcome");
+            p = Packet.GetJoined(client.ClientId, "Welcome");               //positive join
             EnquePacket(client.ClientId, p);
 
-            //alert all joined clients that a new player incoming
-            foreach (var c in connectedClients)
+            foreach (var c in connectedClients)                             //alert all joined clients that a new player incoming
             {
                 if (c.Key == client.ClientId)
                     continue;
@@ -53,10 +52,16 @@ namespace RealTimeServer
             if (IsClientJoined(leave.clientId))
             {
                 //send negative joined
-                Packet p = Packet.GetClientKicked(uint.MaxValue, string.Format("Client {0} was kicked",leave.clientId));
+                Packet p = Packet.GetClientKicked(leave.clientId, string.Format("Client {0} was kicked",leave.clientId));
                 SendBroadcast(p);
                 return;
             }
         }
+
+        public static void ParseUpdate(Packet packet)
+        {
+
+        }
+
     }
 }

@@ -116,7 +116,7 @@ namespace RealTimeServer
             packetId = 0;
         }
         /// <summary>
-        /// A shortcut that create a JOINED packet
+        /// A shortcut that create a JOINED packet (only for client that made the request)
         /// </summary>
         /// <param name="clientId" type="uint">the id assigned to this client, if is uint.maxvalue the client request will be rejected</param>
         /// <param name="jsonReason" type="string">The reason of join or reject</param>
@@ -133,6 +133,12 @@ namespace RealTimeServer
             packet.Writer.Write(reason);
             return packet;
         }
+        /// <summary>
+        /// This is the response message to other clients, excluding the request sender
+        /// </summary>
+        /// <param name="clientId" type="uint"></param>
+        /// <param name="jsonReason" type="string"></param>
+        /// <returns></returns>
         public static Packet GetClientJoined(uint clientId, string jsonReason)
         {
             Packet packet = new Packet(3, true);

@@ -36,8 +36,7 @@ namespace RealTimeServer
         private static Socket socket;
         private static EndPoint myEndpoint;
 
-        //uint = player id
-        private static Dictionary<uint, Queue<Packet>> toSend;
+        private static Dictionary<uint, Queue<Packet>> toSend;  //uint = player id
         /// <summary>
         /// Return the numbers of packet in queue 
         /// </summary>
@@ -96,7 +95,9 @@ namespace RealTimeServer
 
 
 
-            //Receive();
+            Receive();
+
+
             //delta time
             lastTime = watch.Elapsed.TotalSeconds > 0 ? (float)watch.Elapsed.TotalSeconds : 0f;
             TimeStamp += (int)(DeltaTime * 1000);
@@ -163,7 +164,7 @@ namespace RealTimeServer
         public static void Receive()
         {
             byte[] receiveBuffer = new byte[Configuration.ReceiveMaxBufferSize];
-            if (socket.Available <= 0)
+            if (socket.Available <= 0)      //MUST BE REPLACED
                 return;
 
             EndPoint ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 2000);
@@ -171,7 +172,7 @@ namespace RealTimeServer
             if (amount > Configuration.ReceiveMaxBufferSize) //not able to parse this datas
                 return;
 
-            //check this ep is a joined player? if not return
+            //check this ep is a joined player? if not return  (mark ep as not reliable?)
             if (!IsClientJoined(ep))
                 return;
 
@@ -183,11 +184,26 @@ namespace RealTimeServer
             }
             //read command and parse
 
-            
+            byte command = receivedPacket.Command;
+            //MUST BE REFACTORED
+            switch (command)
+            {
+                case 1:                             //join
+                    ParseJoin(receivedPacket);
+                    break;
+                case 5:                             //leave
+                    ParseLeave(receivedPacket);
+                    break;
+                case 10:                            //update
+                    ParseUpdate(receivedPacket);
+                    break;
+            }
+
         }
         #endregion RECEIVE
 
 
+        //TO DO: REMOVE CLIENT ID,NAME AND EP
         #region CONNECTED_CLIENTS_MANAGEMENT
         public static void ReconciliationClientMovements()
         {
@@ -213,6 +229,11 @@ namespace RealTimeServer
         }
         public static void AddClient(IClient client)
         {
+            //same id is impossible to happen
+            //same end point is accepted
+
+            if (client == null) return;
+            if (IsClientJoined(client.Name)) return;    //client with same name is not accepted
             connectedClients.Add(client.ClientId, client);
         }
         public static void RemoveClient(uint clientId)
@@ -231,6 +252,22 @@ namespace RealTimeServer
             return connectedClients.ContainsKey(id);
         }
         /// <summary>
+        /// Get specific client from connected client list by id
+        /// </summary>
+        /// <param name="id" type="uint"></param>
+        /// <returns>Return null if client is not joined</returns>
+        public static IClient GetClient(uint id)
+        {
+            foreach (var client in connectedClients)
+            {
+                if (client.Key == id)
+                    return client.Value;                    //return client
+            }
+            return null;                                    //client does not joined            
+        }
+
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="name" type="string">the name to find</param>
@@ -242,6 +279,23 @@ namespace RealTimeServer
                     return true;
             return false;
         }
+        /// <summary>
+        /// Get specific client from connected client list by name
+        /// </summary>
+        /// <param name="name" type="string"></param>
+        /// <returns>Return null if client is not joined</returns>
+        public static IClient GetClient(string name)
+        {
+            foreach (var client in connectedClients.Values)
+            {
+                if (client.Name == name)
+                    return client;                          //return client
+            }
+            return null;                                    //client does not joined       
+        }
+
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -258,10 +312,25 @@ namespace RealTimeServer
             }
             return false;
         }
+        /// <summary>
+        /// Get specific client from connected client list by end point
+        /// </summary>
+        /// <param name="ep" type="EndPoint"></param>
+        /// <returns>Return null if client is not joined</returns>
+        public static IClient GetClient(EndPoint ep)
+        {
+            IPEndPoint _ep = (IPEndPoint)ep;                        //save reference to wanted ep as IpEndPoint
+            foreach (var client in connectedClients.Values)
+            {
+                IPEndPoint ip = (IPEndPoint)client.EP;              //save reference to current client ep as IpEndPoint
+                if (ip.Address.ToString() == _ep.Address.ToString() && ip.Port == _ep.Port) //compare this end points
+                    return client;
+            }
+            return null;                                            //no one client is joined with this ep
+        }
         #endregion CONNECTED_CLIENTS_MANAGEMENT
 
-
-        //utility for client get and add for better clients management
+        
 
     }
 }
