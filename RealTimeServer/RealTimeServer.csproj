@@ -51,10 +51,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client.cs" />
+    <Compile Include="Server\Client.cs" />
     <Compile Include="Configuration\Configuration.cs" />
     <Compile Include="Core\CoreJsonHandler.cs" />
-    <Compile Include="IClient.cs" />
+    <Compile Include="Server\IClient.cs" />
     <Compile Include="Server\ServerJsonHandler.cs" />
     <Compile Include="Log\SLog.cs" />
     <Compile Include="Core\Packet.cs" />

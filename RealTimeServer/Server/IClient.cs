@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 
-namespace RealTimeServer
+namespace RealTimeServer.AutorityServer
 {
     public interface IClient
     {
@@ -23,3 +23,7 @@ namespace RealTimeServer
         //rotation
     }
 }
+
+
+
+
